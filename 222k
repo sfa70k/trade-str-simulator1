@@ -1,54 +1,51 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
 local Window = Rayfield:CreateWindow({
    Name = "Trade str simulator",
-   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   Icon = 0, 
    LoadingTitle = "trade str simulator",
    LoadingSubtitle = "by 70k",
-   ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
-   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+   ShowText = "Rayfield",
+   Theme = "Default",
 
-   ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+   ToggleUIKeybind = "K",
 
    DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+   DisableBuildWarnings = false,
 
    ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil, -- Create a custom folder for your hub/game
+      Enabled = false,
+      FolderName = nil,
       FileName = "Big Hub"
    },
 
    Discord = {
-      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+      Enabled = false, 
+      Invite = "noinvitelink", 
+      RememberJoins = true 
    },
 
-   KeySystem = false, -- Set this to true to use our key system
+   KeySystem = false,
    KeySettings = {
       Title = "Untitled",
       Subtitle = "Key System",
-      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
-      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+      Note = "No method of obtaining the key is provided",
+      FileName = "Key", 
+      SaveKey = true, 
+      GrabKeyFromSite = false, 
+      Key = {"Hello"} 
    }
 })
-
-local Main = Window:CreateTab("Main", 4483362458) -- Title, Image
+local Main = Window:CreateTab("Main", 4483362458)
+local Other = Window:CreateTab("Other", 4483362458)
 local Section = Main:CreateSection("Misc")
 
-local Button = Main:CreateButton({
+local Button = Other:CreateButton({
    Name = "Inf Yeild",
    Callback = function()
-
    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 
    end,
 })
-
 
 local Button = Main:CreateButton({
    Name = "Auto Punch ON",
@@ -88,12 +85,11 @@ game:GetService("Players").LocalPlayer:WaitForChild("Backpack"):WaitForChild("Co
    end,
 })
 
-
 local Button = Main:CreateButton({
-   Name = "Anti afk ON TSS not roblox",
+   Name = "AntiAfk ON",
    Callback = function()
 
-        _G.autoafk = true;
+_G.autoafk = true;
         while _G.autoafk == true do
 
        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromLocalForServer"):WaitForChild("Afk"):WaitForChild("wantActivity"):FireServer()
@@ -101,18 +97,15 @@ local Button = Main:CreateButton({
         wait(0.5)
 
 end
-         
-        end
 
    end,
 })
 
-
 local Button = Main:CreateButton({
-   Name = "Anti afk off TSS not roblox",
+   Name = "AntiAfk OFF",
    Callback = function()
 
-        _G.autoafk = false;
+_G.autoafk = false;
         while _G.autoafk == true do
 
        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromLocalForServer"):WaitForChild("Afk"):WaitForChild("wantActivity"):FireServer()
@@ -120,101 +113,14 @@ local Button = Main:CreateButton({
         wait(0.5)
 
 end
-         
-        end
 
    end,
 })
 
-
-local Button = Main:CreateButton({
-   Name = "Loop Bring every npc",
+local Button = Other:CreateButton({
+   Name = "Loop Bring",
    Callback = function()
-
-local Players, RunService, UserInputService = game:GetService("Players"), game:GetService("RunService"), game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-local npcCache, npcSet, addedConns, worldWatchConn = {}, {}, {}, nil
-local loopEnabled, heartbeatConn = false, nil
-
-local function getRoot(model) return model and (model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")) end
-local function noCollide(model) for _, p in ipairs(model:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end
-local function isNPCHumanoid(h) return h and h:IsA("Humanoid") and h.Health>0 and not Players:GetPlayerFromCharacter(h.Parent) end
-
-local function addHumanoid(h)
-	if not isNPCHumanoid(h) or npcSet[h] then return end
-	npcSet[h]=true table.insert(npcCache,h)
-	local conn
-	conn = h.AncestryChanged:Connect(function() if not h:IsDescendantOf(workspace) then npcSet[h]=nil for i=#npcCache,1,-1 do if npcCache[i]==h then table.remove(npcCache,i); break end end if conn then conn:Disconnect() end end end)
-	table.insert(addedConns,conn)
-end
-
-local function buildCache()
-	table.clear(npcCache) table.clear(npcSet)
-	for _, c in ipairs(addedConns) do if c then c:Disconnect() end end table.clear(addedConns)
-	for _, obj in ipairs(workspace:GetDescendants()) do if obj:IsA("Humanoid") then addHumanoid(obj) end end
-end
-
-local function attack()
-	local c=LocalPlayer.Character
-	if c then local comb=c:FindFirstChild("Combat") if comb and comb:FindFirstChild("RemoteUse") then comb.RemoteUse:FireServer(LocalPlayer) end end
-end
-
-local function startWorldWatcher() if worldWatchConn then worldWatchConn:Disconnect() end worldWatchConn=workspace.DescendantAdded:Connect(function(i) if i:IsA("Humanoid") then addHumanoid(i) end end) end
-local function stopWorldWatcher() if worldWatchConn then worldWatchConn:Disconnect() worldWatchConn=nil end end
-
-local function startLoopBring()
-	if heartbeatConn then heartbeatConn:Disconnect() end
-	heartbeatConn=RunService.Heartbeat:Connect(function()
-		if not loopEnabled then return end
-		local root=LocalPlayer.Character and getRoot(LocalPlayer.Character)
-		if not root then return end
-		for _, hum in ipairs(npcCache) do
-			if isNPCHumanoid(hum) then
-				local model=hum.Parent local rp=getRoot(model)
-				if rp then noCollide(model) rp.Anchored=true rp.CFrame=root.CFrame*CFrame.new(0,-5,-8) task.delay(0.05,function() if rp and rp.Parent and rp:IsDescendantOf(workspace) then rp.Anchored=false end end) end
-			end
-		end
-		for i=1,5 do attack() end
-	end)
-end
-
-local function stopLoopBring() if heartbeatConn then heartbeatConn:Disconnect() end heartbeatConn=nil end
-
-local ScreenGui=Instance.new("ScreenGui") ScreenGui.ResetOnSpawn=false ScreenGui.Parent=game.CoreGui
-local Button=Instance.new("TextButton") Button.Size=UDim2.new(0,200,0,40) Button.Position=UDim2.new(0.5,-100,0,50) Button.Text="LoopBring+Kill: OFF" Button.BackgroundColor3=Color3.fromRGB(40,40,40) Button.TextColor3=Color3.new(1,1,1) Button.Font=Enum.Font.GothamBold Button.Parent=ScreenGui
-
-local dragging, dragStart, startPos=false,nil,nil
-Button.InputBegan:Connect(function(input)
-	if input.UserInputType==Enum.UserInputType.MouseButton1 then
-		dragging=true dragStart=input.Position startPos=Button.Position
-		input.Changed:Connect(function() if input.UserInputState==Enum.UserInputState.End then dragging=false end end)
-	end
-end)
-UserInputService.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then
-		local delta=input.Position-dragStart
-		Button.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
-	end
-end)
-
-Button.MouseButton1Click:Connect(function()
-	if dragging then return end
-	loopEnabled=not loopEnabled
-	if loopEnabled then buildCache() startWorldWatcher() startLoopBring() Button.Text="LoopBring+Kill: ON"
-	else stopLoopBring() stopWorldWatcher() for _,c in ipairs(addedConns) do if c then c:Disconnect() end end table.clear(addedConns) Button.Text="LoopBring+Kill: OFF" end
-end)
-
-         
-        end
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/sfa70k/trade-str-simulator1/refs/heads/main/setting"))()
 
    end,
 })
-
-
-
-
-
-
-
-
-
