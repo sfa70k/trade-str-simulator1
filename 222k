@@ -124,3 +124,22 @@ local Button = Other:CreateButton({
 
    end,
 })
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromServerForLocal"):WaitForChild("Box"):WaitForChild("Box6"):FireServer()
+
+
+local Button = Main:CreateButton({
+   Name = "autochest6",
+   Callback = function()
+
+_G.autochest6 = true;
+        while _G.autochest6 == true do
+
+       game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromServerForLocal"):WaitForChild("Box"):WaitForChild("Box6"):FireServer()
+
+        wait(0.5)
+
+end
+
+   end,
+})
