@@ -170,3 +170,12 @@ local Button = Other:CreateButton({
 
    end,
 })
+
+local Button = Other:CreateButton({
+   Name = "OP trade str simulator script",
+   Callback = function()
+   loadstring(game:HttpGet("https://rawscripts.net/raw/(Code:-FreeSecret)-Trade-Strength-Simulator-Trade-Strength-Simulator-35978"))()
+
+   end,
+})
+
