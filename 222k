@@ -125,14 +125,12 @@ local Button = Other:CreateButton({
    end,
 })
 
-game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromServerForLocal"):WaitForChild("Box"):WaitForChild("Box6"):FireServer()
-
 
 local Button = Main:CreateButton({
    Name = "autochest6",
    Callback = function()
 
-_G.autochest6 = true;
+_G.autochest6 = false;
         while _G.autochest6 == true do
 
        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromServerForLocal"):WaitForChild("Box"):WaitForChild("Box6"):FireServer()
@@ -140,6 +138,35 @@ _G.autochest6 = true;
         wait(0.5)
 
 end
+
+   end,
+})
+
+
+local Button = Main:CreateButton({
+   Name = "auto upgrade time on",
+   Callback = function()
+
+_G.autotime = true;
+        while _G.autotime == true do
+
+       local args = {
+	true
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("FromLocalForServer"):WaitForChild("TimeUpgrade"):WaitForChild("TimeMul"):FireServer(unpack(args))
+
+
+        wait(10)
+
+end
+
+   end,
+})
+
+local Button = Other:CreateButton({
+   Name = "other gui for some autos",
+   Callback = function()
+   loadstring(game:HttpGet("https://gist.githubusercontent.com/uhhsay2/7529ba7011b1a023195bac49f31030a0/raw/strength.lua"))()
 
    end,
 })
