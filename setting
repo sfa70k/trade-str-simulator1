@@ -3,70 +3,158 @@ local LocalPlayer = Players.LocalPlayer
 local npcCache, npcSet, addedConns, worldWatchConn = {}, {}, {}, nil
 local loopEnabled, heartbeatConn = false, nil
 
-local function getRoot(model) return model and (model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")) end
-local function noCollide(model) for _, p in ipairs(model:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end
-local function isNPCHumanoid(h) return h and h:IsA("Humanoid") and h.Health>0 and not Players:GetPlayerFromCharacter(h.Parent) end
+local function getRoot(model)
+    return model and (model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso"))
+end
+
+local function isNPCHumanoid(h)
+    return h and h:IsA("Humanoid") and h.Health > 0 and not Players:GetPlayerFromCharacter(h.Parent)
+end
 
 local function addHumanoid(h)
-	if not isNPCHumanoid(h) or npcSet[h] then return end
-	npcSet[h]=true table.insert(npcCache,h)
-	local conn
-	conn = h.AncestryChanged:Connect(function() if not h:IsDescendantOf(workspace) then npcSet[h]=nil for i=#npcCache,1,-1 do if npcCache[i]==h then table.remove(npcCache,i); break end end if conn then conn:Disconnect() end end end)
-	table.insert(addedConns,conn)
+    if not isNPCHumanoid(h) or npcSet[h] then return end
+    npcSet[h] = true
+    table.insert(npcCache, h)
+    local conn
+    conn = h.AncestryChanged:Connect(function()
+        if not h:IsDescendantOf(workspace) then
+            npcSet[h] = nil
+            for i = #npcCache, 1, -1 do
+                if npcCache[i] == h then
+                    table.remove(npcCache, i)
+                    break
+                end
+            end
+            if conn then conn:Disconnect() end
+        end
+    end)
+    table.insert(addedConns, conn)
 end
 
 local function buildCache()
-	table.clear(npcCache) table.clear(npcSet)
-	for _, c in ipairs(addedConns) do if c then c:Disconnect() end end table.clear(addedConns)
-	for _, obj in ipairs(workspace:GetDescendants()) do if obj:IsA("Humanoid") then addHumanoid(obj) end end
+    table.clear(npcCache)
+    table.clear(npcSet)
+    for _, c in ipairs(addedConns) do if c then c:Disconnect() end end
+    table.clear(addedConns)
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Humanoid") then addHumanoid(obj) end
+    end
 end
 
 local function attack()
-	local c=LocalPlayer.Character
-	if c then local comb=c:FindFirstChild("Combat") if comb and comb:FindFirstChild("RemoteUse") then comb.RemoteUse:FireServer(LocalPlayer) end end
+    local c = LocalPlayer.Character
+    if c then
+        local comb = c:FindFirstChild("Combat")
+        if comb and comb:FindFirstChild("RemoteUse") then
+            comb.RemoteUse:FireServer(LocalPlayer)
+        end
+    end
 end
 
-local function startWorldWatcher() if worldWatchConn then worldWatchConn:Disconnect() end worldWatchConn=workspace.DescendantAdded:Connect(function(i) if i:IsA("Humanoid") then addHumanoid(i) end end) end
-local function stopWorldWatcher() if worldWatchConn then worldWatchConn:Disconnect() worldWatchConn=nil end end
+local function startWorldWatcher()
+    if worldWatchConn then worldWatchConn:Disconnect() end
+    worldWatchConn = workspace.DescendantAdded:Connect(function(i)
+        if i:IsA("Humanoid") then addHumanoid(i) end
+    end)
+end
+
+local function stopWorldWatcher()
+    if worldWatchConn then worldWatchConn:Disconnect() worldWatchConn = nil end
+end
 
 local function startLoopBring()
-	if heartbeatConn then heartbeatConn:Disconnect() end
-	heartbeatConn=RunService.Heartbeat:Connect(function()
-		if not loopEnabled then return end
-		local root=LocalPlayer.Character and getRoot(LocalPlayer.Character)
-		if not root then return end
-		for _, hum in ipairs(npcCache) do
-			if isNPCHumanoid(hum) then
-				local model=hum.Parent local rp=getRoot(model)
-				if rp then noCollide(model) rp.Anchored=true rp.CFrame=root.CFrame*CFrame.new(0,-5,-8) task.delay(0.05,function() if rp and rp.Parent and rp:IsDescendantOf(workspace) then rp.Anchored=false end end) end
-			end
-		end
-		for i=1,5 do attack() end
-	end)
+    if heartbeatConn then heartbeatConn:Disconnect() end
+    heartbeatConn = RunService.Heartbeat:Connect(function()
+        if not loopEnabled then return end
+        local root = LocalPlayer.Character and getRoot(LocalPlayer.Character)
+        if not root then return end
+
+        for _, hum in ipairs(npcCache) do
+            if isNPCHumanoid(hum) then
+                local model = hum.Parent
+                local rp = getRoot(model)
+                local dmgPart = model:FindFirstChild("Head") or getRoot(model)
+
+                if rp and dmgPart then
+                    -- Move entire NPC body far away so it cannot hit player
+                    rp.CFrame = CFrame.new(root.Position + Vector3.new(0, 100, 0))
+                    rp.Anchored = true
+
+                    -- Remove old dummy if exists
+                    local oldDummy = workspace:FindFirstChild("LoopBringDummy_"..hum:GetFullName():gsub("%.","_"))
+                    if oldDummy then oldDummy:Destroy() end
+
+                    -- Spawn dummy 6.8 studs in front of player
+                    local forwardPos = root.Position + (root.CFrame.LookVector * 6.8)
+
+                    -- Clone the damage part
+                    local clone = dmgPart:Clone()
+                    clone.Name = "LoopBringDummy_"..hum:GetFullName():gsub("%.","_")
+                    clone.Anchored = true
+                    clone.CanCollide = false
+                    clone.Size = Vector3.new(6,6,6) -- suitable size for hitting
+                    clone.CFrame = CFrame.new(forwardPos)
+                    clone.Parent = workspace
+                end
+            end
+        end
+
+        -- spam attacks
+        for i = 1,5 do attack() end
+    end)
 end
 
-local function stopLoopBring() if heartbeatConn then heartbeatConn:Disconnect() end heartbeatConn=nil end
+local function stopLoopBring()
+    if heartbeatConn then heartbeatConn:Disconnect() end
+    heartbeatConn = nil
+end
 
-local ScreenGui=Instance.new("ScreenGui") ScreenGui.ResetOnSpawn=false ScreenGui.Parent=game.CoreGui
-local Button=Instance.new("TextButton") Button.Size=UDim2.new(0,200,0,40) Button.Position=UDim2.new(0.5,-100,0,50) Button.Text="LoopBring+Kill: OFF" Button.BackgroundColor3=Color3.fromRGB(40,40,40) Button.TextColor3=Color3.new(1,1,1) Button.Font=Enum.Font.GothamBold Button.Parent=ScreenGui
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
 
-local dragging, dragStart, startPos=false,nil,nil
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(0,200,0,40)
+Button.Position = UDim2.new(0.5,-100,0,50)
+Button.Text = "LoopBring+Kill: OFF"
+Button.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Button.TextColor3 = Color3.new(1,1,1)
+Button.Font = Enum.Font.GothamBold
+Button.Parent = ScreenGui
+
+local dragging, dragStart, startPos = false,nil,nil
 Button.InputBegan:Connect(function(input)
-	if input.UserInputType==Enum.UserInputType.MouseButton1 then
-		dragging=true dragStart=input.Position startPos=Button.Position
-		input.Changed:Connect(function() if input.UserInputState==Enum.UserInputState.End then dragging=false end end)
-	end
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+        dragging=true
+        dragStart=input.Position
+        startPos=Button.Position
+        input.Changed:Connect(function()
+            if input.UserInputState==Enum.UserInputState.End then dragging=false end
+        end)
+    end
 end)
+
 UserInputService.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then
-		local delta=input.Position-dragStart
-		Button.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
-	end
+    if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+        local delta = input.Position-dragStart
+        Button.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
+    end
 end)
 
 Button.MouseButton1Click:Connect(function()
-	if dragging then return end
-	loopEnabled=not loopEnabled
-	if loopEnabled then buildCache() startWorldWatcher() startLoopBring() Button.Text="LoopBring+Kill: ON"
-	else stopLoopBring() stopWorldWatcher() for _,c in ipairs(addedConns) do if c then c:Disconnect() end end table.clear(addedConns) Button.Text="LoopBring+Kill: OFF" end
+    if dragging then return end
+    loopEnabled = not loopEnabled
+    if loopEnabled then
+        buildCache()
+        startWorldWatcher()
+        startLoopBring()
+        Button.Text = "LoopBring+Kill: ON"
+    else
+        stopLoopBring()
+        stopWorldWatcher()
+        for _,c in ipairs(addedConns) do if c then c:Disconnect() end end
+        table.clear(addedConns)
+        Button.Text = "LoopBring+Kill: OFF"
+    end
 end)
