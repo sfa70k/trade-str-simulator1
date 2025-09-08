@@ -179,3 +179,109 @@ local Button = Other:CreateButton({
    end,
 })
 
+local Button = Main:CreateButton({
+   Name = "delete all mobs expect bosses",
+   Callback = function()
+
+local Players = game:GetService("Players")
+local workspace = workspace
+
+local rawPaths = {
+    "workspace.LeaderBoard.DiamondLeaderBoard.Dummy1",
+    "workspace.LeaderBoard.RankLeaderBoard.Dummy1",
+    "workspace.LeaderBoard.ASCLeaderBoard.Dummy1",
+    "workspace.LeaderBoard.SACLeaderBoard.Dummy1",
+    "workspace.LeaderBoard.STLeaderBoard.Dummy1",
+    "workspace.LeaderBoard.WinLeaderBoard.Dummy1",
+    "workspace.RespawnMobs.Basher.Basher",
+    "workspace.RespawnMobs.Bob.Bob",
+    "workspace.RespawnMobs.Green.Grn",
+    "workspace.RespawnMobs.Kid.Kid",
+    "workspace.RespawnMobs.Kira.Kira",
+    "workspace.RespawnMobs.RobloxEgor.RobloxEgor",
+    "workspace.RespawnMobs.TheGreen.TheGreen",
+    "workspace.RespawnMobs.White.Whe",
+}
+
+
+local targets = {}
+for _, p in ipairs(rawPaths) do
+    targets[string.lower(p)] = true
+end
+
+local function findChildCaseInsensitive(parent, name)
+    if not parent then return nil end
+    local exact = parent:FindFirstChild(name)
+    if exact then return exact end
+    local lowerName = string.lower(name)
+    for _, c in ipairs(parent:GetChildren()) do
+        if string.lower(c.Name) == lowerName then
+            return c
+        end
+    end
+    return nil
+end
+
+local function findInstanceByDotPath(path)
+    local parts = {}
+    for part in string.gmatch(path, "[^.]+") do table.insert(parts, part) end
+    if #parts == 0 then return nil end
+    local firstLower = string.lower(parts[1])
+    local cur
+    if firstLower == "workspace" then
+        cur = workspace
+        table.remove(parts,1)
+    elseif firstLower == "players" then
+        cur = game:GetService("Players")
+        table.remove(parts,1)
+    elseif firstLower == "game" then
+        cur = game
+        table.remove(parts,1)
+    else
+        
+        cur = workspace
+    end
+    for _, part in ipairs(parts) do
+        cur = findChildCaseInsensitive(cur, part)
+        if not cur then return nil end
+    end
+    return cur
+end
+
+local function tryDelete(path)
+    local inst = findInstanceByDotPath(path)
+    if inst then
+        pcall(function() inst:Destroy() end)
+        print("[local-delete] Deleted:", path)
+        return true
+    end
+    return false
+end
+
+
+for _, p in ipairs(rawPaths) do
+    tryDelete(p)
+end
+
+
+spawn(function()
+    while true do
+        for _, p in ipairs(rawPaths) do
+            tryDelete(p)
+        end
+        wait(1.5)
+    end
+end)
+
+
+workspace.DescendantAdded:Connect(function(inst)
+    local full = inst:GetFullName()         
+    local lower = string.lower(full)        
+    if targets[lower] then
+        pcall(function() inst:Destroy() end)
+        print("[local-delete] Deleted on add:", full)
+    end
+end)
+
+   end,
+})
